@@ -141,8 +141,28 @@ runs:
     - name: Get Terraform Outputs
       if: env.apply_success == 'true'
       id: outputs
-      run: |
-        echo "s3_bucket_name=$(terraform output -raw s3_bucket_name)" >> $GITHUB_ENV
-        echo "cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_ENV
       shell: bash
+      run: |
+        echo "cloudfront_domain_name=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
+        echo "cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_ENV
+        echo "certificate_arn=$(terraform output -raw certificate_arn)" >> $GITHUB_ENV
       working-directory: ${{ inputs.terraform-dir }}
+
+    - name: Set Action Outputs
+      shell: bash
+      run: |
+        echo "::set-output name=cloudfront_domain_name::${{ env.cloudfront_domain_name }}"
+        echo "::set-output name=cloudfront_distribution_id::${{ env.cloudfront_distribution_id }}"
+        echo "::set-output name=certificate_arn::${{ env.certificate_arn }}"shell: bash
+      working-directory: ${{ inputs.terraform-dir }}
+
+outputs:
+  cloudfront_domain_name:
+    description: 'The CloudFront distribution domain name (e.g., d123...cloudfront.net)'
+    value: ${{ steps.outputs.outputs.cloudfront_domain_name }}
+  cloudfront_distribution_id:
+    description: 'The CloudFront distribution ID for cache invalidation'
+    value: ${{ steps.outputs.outputs.cloudfront_distribution_id }}
+  certificate_arn:
+    description: 'The ARN of the ACM certificate'
+    value: ${{ steps.outputs.outputs.certificate_arn }}

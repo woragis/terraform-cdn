@@ -1,23 +1,3 @@
-output "full_domain" {
-  description = "The full domain used for the site (e.g., app.example.com)"
-  value       = local.full_domain
-}
-
-output "project_name" {
-  description = "The project name used for naming resources and tags (or null if not provided)"
-  value       = var.project_name
-}
-
-output "aws_region" {
-  description = "AWS region where resources are deployed"
-  value       = var.aws_region
-}
-
-output "environment" {
-  description = "The deployment environment (e.g., dev, prod, staging)"
-  value       = local.environment
-}
-
 output "cloudfront_domain_name" {
   description = "The CloudFront distribution domain name (e.g., d123...cloudfront.net)"
   value       = aws_cloudfront_distribution.cdn.domain_name
