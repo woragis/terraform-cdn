@@ -62,8 +62,3 @@ variable "ssl_minimum_protocol_version" {
   description = "Minimum protocol version for SSL in CloudFront"
   default     = "TLSv1.2_2021"
 }
-
-variable "full_domain" {
-  type        = string
-  description = "The full domain name used for the certificate and DNS (e.g., 'app.example.com')"
-}
