@@ -1,14 +1,19 @@
 output "cloudfront_domain_name" {
-  description = "The CloudFront distribution domain name (e.g., d123...cloudfront.net)"
+  description = "CloudFront domain to point DNS to"
   value       = aws_cloudfront_distribution.cdn.domain_name
 }
 
-output "cloudfront_distribution_id" {
-  description = "The CloudFront distribution ID for cache invalidation"
-  value       = aws_cloudfront_distribution.cdn.id
+output "full_domain" {
+  description = "The full domain name (subdomain + root)"
+  value       = local.full_domain
 }
 
-output "certificate_arn" {
-  description = "The ARN of the ACM certificate"
-  value       = aws_acm_certificate.cert.arn
+output "zone_id" {
+  description = "Route53 zone ID (from primary zone data source)"
+  value       = data.aws_route53_zone.primary.zone_id
+}
+
+output "cloudfront_distribution_id" {
+  description = "CloudFront distribution ID (for cache invalidation)"
+  value       = aws_cloudfront_distribution.cdn.id
 }

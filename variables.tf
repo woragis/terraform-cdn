@@ -1,6 +1,6 @@
 variable "project_name" {
   type        = string
-  description = "Project name used for naming resources and tags (e.g., 'react-app')"
+  description = "Project name used for naming resources and tags"
   default     = null
 }
 
@@ -15,13 +15,13 @@ variable "root_domain" {
 
 variable "subdomain" {
   type        = string
-  description = "Subdomain for the React app (e.g., 'app' will result in 'app.example.com')"
+  description = "Subdomain for the app (e.g., 'app' -> app.example.com)"
   default     = "app"
 }
 
 variable "aws_region" {
-  description = "AWS region to deploy all resources"
   type        = string
+  description = "AWS region to deploy all resources"
   default     = "us-east-1"
 }
 
@@ -33,12 +33,6 @@ variable "environment" {
     condition     = contains(["dev", "prod", "staging"], lower(var.environment))
     error_message = "The environment must be one of: 'dev', 'prod', or 'staging'."
   }
-}
-
-variable "cloudfront_distribution_name" {
-  type        = string
-  description = "Name for the CloudFront distribution"
-  default     = null
 }
 
 variable "origin_domain_name" {

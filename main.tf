@@ -10,8 +10,7 @@ data "aws_route53_zone" "primary" {
 resource "aws_acm_certificate" "cert" {
   domain_name       = local.full_domain
   validation_method = "DNS"
-
-  tags = local.common_tags
+  tags              = local.common_tags
 }
 
 resource "aws_route53_record" "cert_validation" {
@@ -35,7 +34,7 @@ resource "aws_cloudfront_origin_access_identity" "oai" {
 
 resource "aws_cloudfront_distribution" "cdn" {
   origin {
-    domain_name = local.origin_domain_name
+    domain_name = var.origin_domain_name
     origin_id   = local.cloudfront_origin_id
 
     s3_origin_config {
