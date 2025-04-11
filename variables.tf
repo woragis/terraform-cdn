@@ -41,11 +41,6 @@ variable "cloudfront_distribution_name" {
   default     = null
 }
 
-variable "logging_bucket_domain_name" {
-  type        = string
-  description = "Domain name of the logging S3 bucket (e.g., 'logs-bucket.s3.amazonaws.com')"
-}
-
 variable "origin_domain_name" {
   type        = string
   description = "Domain name of the S3 bucket origin for CloudFront (e.g., 'app-bucket.s3.amazonaws.com')"

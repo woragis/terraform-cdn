@@ -1,6 +1,5 @@
 locals {
   origin_domain_name         = var.origin_domain_name
-  logging_bucket_domain_name = var.logging_bucket_domain_name
   aws_region                 = var.aws_region
   root_domain                = var.root_domain
 
@@ -23,7 +22,7 @@ locals {
       Project     = coalesce(trimspace(var.project_name), "App")
       Environment = local.environment
       ManagedBy   = "Terraform"
-      Purpose     = "ReactFrontend"
+      Purpose     = "Static Website"
     },
     var.tags != null ? var.tags : {}
   )

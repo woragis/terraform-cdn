@@ -33,10 +33,6 @@ inputs:
     description: 'Origin domain name (typically S3 static site bucket domain)'
     required: true
 
-  logging-bucket-domain-name:
-    description: 'Logging bucket domain name for CloudFront logs'
-    required: true
-
   cloudfront-distribution-name:
     description: 'Custom CloudFront distribution name'
     required: false
@@ -90,7 +86,6 @@ runs:
           -var="aws_region=${{ inputs.aws-region }}" \
           -var="environment=${{ inputs.environment }}" \
           -var="origin_domain_name=${{ inputs.origin-domain-name }}" \
-          -var="logging_bucket_domain_name=${{ inputs.logging-bucket-domain-name }}" \
           -var="cloudfront_distribution_name=${{ inputs.cloudfront-distribution-name }}" \
           -var="ssl_minimum_protocol_version=${{ inputs.ssl-minimum-protocol-version }}" \
           -var='tags=${{ inputs.tags }}' \
@@ -104,14 +99,11 @@ runs:
       run: |
         for attempt in {1..5}; do
           if terraform apply -auto-approve tfplan; then
-            echo "Terraform apply succeeded on attempt $attempt"
             echo "apply_success=true" >> $GITHUB_ENV
             break
           else
-            echo "Attempt $attempt failed. Retrying in 120 seconds..."
             sleep 120
             if [ $attempt -eq 5 ]; then
-              echo "Terraform apply failed after 5 attempts"
               echo "apply_success=false" >> $GITHUB_ENV
               exit 1
             fi
@@ -123,7 +115,6 @@ runs:
     - name: Terraform Destroy on Failure
       if: env.apply_success == 'false'
       run: |
-        echo "Cleaning up resources with terraform destroy..."
         terraform destroy -auto-approve \
           -var="project_name=${{ inputs.project-name }}" \
           -var="root_domain=${{ inputs.root-domain }}" \
@@ -131,7 +122,6 @@ runs:
           -var="aws_region=${{ inputs.aws-region }}" \
           -var="environment=${{ inputs.environment }}" \
           -var="origin_domain_name=${{ inputs.origin-domain-name }}" \
-          -var="logging_bucket_domain_name=${{ inputs.logging-bucket-domain-name }}" \
           -var="cloudfront_distribution_name=${{ inputs.cloudfront-distribution-name }}" \
           -var="ssl_minimum_protocol_version=${{ inputs.ssl-minimum-protocol-version }}" \
           -var='tags=${{ inputs.tags }}'
@@ -153,7 +143,7 @@ runs:
       run: |
         echo "::set-output name=cloudfront_domain_name::${{ env.cloudfront_domain_name }}"
         echo "::set-output name=cloudfront_distribution_id::${{ env.cloudfront_distribution_id }}"
-        echo "::set-output name=certificate_arn::${{ env.certificate_arn }}"shell: bash
+        echo "::set-output name=certificate_arn::${{ env.certificate_arn }}"
       working-directory: ${{ inputs.terraform-dir }}
 
 outputs:

@@ -89,12 +89,6 @@ resource "aws_cloudfront_distribution" "cdn" {
     minimum_protocol_version = local.ssl_minimum_protocol_version
   }
 
-  logging_config {
-    bucket          = local.logging_bucket_domain_name
-    include_cookies = false
-    prefix          = "cloudfront/"
-  }
-
   tags = local.common_tags
 
   depends_on = [aws_acm_certificate_validation.cert]
