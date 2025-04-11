@@ -33,11 +33,6 @@ inputs:
     description: 'Origin domain name (typically S3 static site bucket domain)'
     required: true
 
-  cloudfront-distribution-name:
-    description: 'Custom CloudFront distribution name'
-    required: false
-    default: 'null'
-
   ssl-minimum-protocol-version:
     description: 'The minimum TLS version CloudFront accepts'
     required: false
@@ -86,7 +81,6 @@ runs:
           -var="aws_region=${{ inputs.aws-region }}" \
           -var="environment=${{ inputs.environment }}" \
           -var="origin_domain_name=${{ inputs.origin-domain-name }}" \
-          -var="cloudfront_distribution_name=${{ inputs.cloudfront-distribution-name }}" \
           -var="ssl_minimum_protocol_version=${{ inputs.ssl-minimum-protocol-version }}" \
           -var='tags=${{ inputs.tags }}' \
           -out=tfplan
