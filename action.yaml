@@ -1,15 +1,7 @@
-name: 'Terraform AWS CloudFront'
-description: 'Configure CloudFront using Terraform'
+name: 'Terraform AWS Cognito'
+description: 'Terraform AWS Cognito'
 
 inputs:
-  project-name:
-    description: 'The project name used for naming resources and tags'
-    required: true
-
-  root-domain:
-    description: 'The main domain for the application (e.g., "example.com")'
-    required: true
-
   terraform-dir:
     description: 'Directory where the Terraform code is located'
     required: true
@@ -19,40 +11,19 @@ inputs:
     required: false
     default: 'us-east-1'
 
-  subdomain:
+  cognito-name:
     description: 'Subdomain (e.g., app or www)'
-    required: false
-    default: 'app'
-
-  environment:
-    description: 'Deployment environment (e.g., dev, prod, staging)'
-    required: false
-    default: 'dev'
-
-  origin-domain-name:
-    description: 'Origin domain name (typically S3 static site bucket domain)'
     required: true
 
-  ssl-minimum-protocol-version:
-    description: 'The minimum TLS version CloudFront accepts'
-    required: false
-    default: 'TLSv1.2_2021'
-
-  tags:
-    description: 'Extra tags for resources (JSON string)'
-    required: false
-    default: '{}'
+  cognito-user-pool:
+    description: 'Deployment environment (e.g., dev, prod, staging)'
+    required: true
 
 runs:
   using: 'composite'
   steps:
     - name: Checkout code
       uses: actions/checkout@v3
-
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: '16'
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
@@ -67,29 +38,25 @@ runs:
         aws-region: ${{ inputs.aws-region }}
 
     - name: Terraform Init
-      run: terraform init
-      shell: bash
       working-directory: ${{ inputs.terraform-dir }}
+      shell: bash
+      run: terraform init
 
     - name: Terraform Plan
       id: plan
-      run: |
-        terraform plan \
-          -var="project_name=${{ inputs.project-name }}" \
-          -var="root_domain=${{ inputs.root-domain }}" \
-          -var="subdomain=${{ inputs.subdomain }}" \
-          -var="aws_region=${{ inputs.aws-region }}" \
-          -var="environment=${{ inputs.environment }}" \
-          -var="origin_domain_name=${{ inputs.origin-domain-name }}" \
-          -var="ssl_minimum_protocol_version=${{ inputs.ssl-minimum-protocol-version }}" \
-          -var='tags=${{ inputs.tags }}' \
-          -out=tfplan
-      shell: bash
       working-directory: ${{ inputs.terraform-dir }}
+      shell: bash
+      run: |
+        terraform plan -out=tfplan \
+          # -var="create_cognito=${{ env.create_cognito }}" \
+          -var="cognito_name=${{ inputs.cognito-name }}" \
+          -var="cognito_user_pool=${{ inputs.cognito-user-pool }}"
 
     - name: Terraform Apply with Retry
       id: apply
       continue-on-error: true
+      working-directory: ${{ inputs.terraform-dir }}
+      shell: bash
       run: |
         for attempt in {1..5}; do
           if terraform apply -auto-approve tfplan; then
@@ -103,51 +70,13 @@ runs:
             fi
           fi
         done
-      shell: bash
-      working-directory: ${{ inputs.terraform-dir }}
 
     - name: Terraform Destroy on Failure
       if: env.apply_success == 'false'
+      working-directory: ${{ inputs.terraform-dir }}
+      shell: bash
       run: |
         terraform destroy -auto-approve \
-          -var="project_name=${{ inputs.project-name }}" \
-          -var="root_domain=${{ inputs.root-domain }}" \
-          -var="subdomain=${{ inputs.subdomain }}" \
-          -var="aws_region=${{ inputs.aws-region }}" \
-          -var="environment=${{ inputs.environment }}" \
-          -var="origin_domain_name=${{ inputs.origin-domain-name }}" \
-          -var="cloudfront_distribution_name=${{ inputs.cloudfront-distribution-name }}" \
-          -var="ssl_minimum_protocol_version=${{ inputs.ssl-minimum-protocol-version }}" \
-          -var='tags=${{ inputs.tags }}'
-      shell: bash
-      working-directory: ${{ inputs.terraform-dir }}
-
-    - name: Export Terraform Outputs
-      if: env.apply_success == 'true'
-      id: outputs
-      shell: bash
-      run: |
-        echo "cloudfront_domain_name=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_ENV
-        echo "cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_ENV
-        echo "full_domain=$(terraform output -raw full_domain)" >> $GITHUB_ENV
-        echo "zone_id=$(terraform output -raw zone_id)" >> $GITHUB_ENV
-
-        echo "cloudfront_domain_name=$(terraform output -raw cloudfront_domain_name)" >> $GITHUB_OUTPUT
-        echo "cloudfront_distribution_id=$(terraform output -raw cloudfront_distribution_id)" >> $GITHUB_OUTPUT
-        echo "full_domain=$(terraform output -raw full_domain)" >> $GITHUB_OUTPUT
-        echo "zone_id=$(terraform output -raw zone_id)" >> $GITHUB_OUTPUT
-      working-directory: ${{ inputs.terraform-dir }}
-
-outputs:
-  cloudfront_domain_name:
-    description: 'The CloudFront distribution domain name (e.g., d123...cloudfront.net)'
-    value: ${{ steps.outputs.outputs.cloudfront_domain_name }}
-  cloudfront_distribution_id:
-    description: 'The CloudFront distribution ID for cache invalidation'
-    value: ${{ steps.outputs.outputs.cloudfront_distribution_id }}
-  full_domain:
-    description: 'Full Domain of CDN'
-    value: ${{ steps.outputs.outputs.full_domain }}
-  zone_id:
-    description: 'Zone Id of CDN'
-    value: ${{ steps.outputs.outputs.zone_id }}
+        # -var="create_cognito=${{ env.create_cognito }}" \
+        -var="cognito_name=${{ inputs.cognito-name }}" \
+        -var="cognito_user_pool=${{ inputs.cognito-user-pool }}"
