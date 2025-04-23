@@ -42,21 +42,6 @@ runs:
       shell: bash
       run: terraform init
 
-    - name: 🔍 Get Cognito User Pool ID by name
-      id: get_pool_id
-      shell: bash
-      run: |
-        pool_id=$(aws cognito-idp list-user-pools --max-results 60 \
-          --query "UserPools[?Name=='${{ inputs.cognito-user-pool }}'].Id" \
-          --output text)
-        echo "COGNITO_POOL_ID=$pool_id" >> $GITHUB_ENV
-
-    # Optional: Import if needed
-    - name: 📦 Terraform Import Cognito
-      shell: bash
-      working-directory: ${{ inputs.terraform-dir }}
-      run: terraform import aws_cognito_user_pool.main ${{ env.COGNITO_POOL_ID }}
-
     - name: Terraform Plan
       id: plan
       working-directory: ${{ inputs.terraform-dir }}
@@ -64,15 +49,34 @@ runs:
       run: |
         terraform plan -out=tfplan \
           -var="cognito_name=${{ inputs.cognito-name }}" \
-          -var="cognito_user_pool=${{ inputs.cognito-user-pool }}" \
-          -var="cognito_user_pool_id=${{ env.COGNITO_POOL_ID }}"
+          -var="cognito_user_pool=${{ inputs.cognito-user-pool }}"
 
-    - name: Terraform Destroy on Failure
-      if: env.apply_success == 'false'
+    - name: Terraform Apply
+      if: success()
+      working-directory: ${{ inputs.terraform-dir }}
+      shell: bash
+      run: terraform apply -input=false -auto-approve tfplan
+
+    - name: Set outputs
+      if: success()
       working-directory: ${{ inputs.terraform-dir }}
       shell: bash
       run: |
-        terraform destroy -auto-approve \
-        # -var="create_cognito=${{ env.create_cognito }}" \
-        -var="cognito_name=${{ inputs.cognito-name }}" \
-        -var="cognito_user_pool=${{ inputs.cognito-user-pool }}"
+        echo "user_pool_id=$(terraform output -raw user_pool_id)" >> $GITHUB_ENV
+        echo "client_id=$(terraform output -raw client_id)" >> $GITHUB_ENV
+
+    - name: Output values
+      if: success()
+      working-directory: ${{ inputs.terraform-dir }}
+      shell: bash
+      run: |
+        echo "Cognito User Pool ID: ${{ env.user_pool_id }}"
+        echo "Cognito User Pool Client ID: ${{ env.client_id }}"
+
+outputs:
+  cognito-user-pool-id:
+    value: ${{ env.user_pool_id }}
+    description: 'Cognito User Pool ID'
+  cognito-client-id:
+    value: ${{ env.client_id }}
+    description: 'Cognito User Pool Client ID'
