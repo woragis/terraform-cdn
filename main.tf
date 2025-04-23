@@ -2,50 +2,55 @@ provider "aws" {
   region = local.aws_region
 }
 
+# Create Cognito User Pool only if the flag is true
 resource "aws_cognito_user_pool" "this" {
-  name = "my-user-pool"
+  count = local.create_cognito ? 1 : 0
+
+  name = local.user_pool_name
 
   username_attributes = ["email"] # ✅ Login with email only
 
   auto_verified_attributes = ["email"]
 
   schema {
-    name     = "email"
-    required = true
-    mutable  = false
-    attribute_data_type = string
+    name     = local.user_pool_email_schema.name
+    required = local.user_pool_email_schema.required
+    mutable  = local.user_pool_email_schema.mutable
+    attribute_data_type = local.user_pool_email_schema.attribute_data_type
   }
 
   schema {
-    name     = "name"
-    required = true
-    mutable  = true
-    attribute_data_type = string
+    name     = local.user_pool_name_schema.name
+    required = local.user_pool_name_schema.required
+    mutable  = local.user_pool_name_schema.mutable
+    attribute_data_type = local.user_pool_name_schema.attribute_data_type
   }
 
   password_policy {
-    minimum_length    = 8
-    require_lowercase = true
-    require_numbers   = true
-    require_symbols   = true
-    require_uppercase = true
+    minimum_length    = local.password_policy.minimum_length
+    require_lowercase = local.password_policy.require_lowercase
+    require_numbers   = local.password_policy.require_numbers
+    require_symbols   = local.password_policy.require_symbols
+    require_uppercase = local.password_policy.require_uppercase
   }
 
   account_recovery_setting {
     recovery_mechanism {
-      name     = "verified_email"
-      priority = 1
+      name     = local.account_recovery_setting.recovery_mechanism.name
+      priority = local.account_recovery_setting.recovery_mechanism.priority
     }
   }
 }
 
 resource "aws_cognito_user_pool_client" "this" {
-  name         = "my-user-pool-client"
-  user_pool_id = aws_cognito_user_pool.this.id
+  count = local.create_cognito ? 1 : 0
 
-  access_token_validity  = 1440  # 1 day (in minutes)
-  id_token_validity      = 1440  # 1 day (in minutes)
-  refresh_token_validity = 1     # 1 day (in days)
+  name         = "my-user-pool-client"
+  user_pool_id = aws_cognito_user_pool.this[0].id
+
+  access_token_validity  = local.token_validity_minutes
+  id_token_validity      = local.token_validity_minutes
+  refresh_token_validity = local.token_validity_days
 
   token_validity_units {
     access_token  = "minutes"
@@ -65,9 +70,11 @@ resource "aws_cognito_user_pool_client" "this" {
 }
 
 output "user_pool_id" {
-  value = aws_cognito_user_pool.this.id
+  value = aws_cognito_user_pool.this[0].id
+  description = "The Cognito User Pool ID."
 }
 
 output "client_id" {
-  value = aws_cognito_user_pool_client.this.id
+  value = aws_cognito_user_pool_client.this[0].id
+  description = "The Cognito User Pool Client ID."
 }
