@@ -48,6 +48,7 @@ runs:
       shell: bash
       run: |
         terraform plan -out=tfplan \
+          -var="aws_region=${{ inputs.aws-region }}"
           -var="cognito_name=${{ inputs.cognito-name }}" \
           -var="cognito_user_pool=${{ inputs.cognito-user-pool }}"
 
