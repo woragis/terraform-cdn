@@ -42,34 +42,30 @@ runs:
       shell: bash
       run: terraform init
 
+    - name: 🔍 Get Cognito User Pool ID by name
+      id: get_pool_id
+      shell: bash
+      run: |
+        pool_id=$(aws cognito-idp list-user-pools --max-results 60 \
+          --query "UserPools[?Name=='${{ inputs.cognito-user-pool }}'].Id" \
+          --output text)
+        echo "COGNITO_POOL_ID=$pool_id" >> $GITHUB_ENV
+
+    # Optional: Import if needed
+    - name: 📦 Terraform Import Cognito
+      shell: bash
+      working-directory: ${{ inputs.terraform-dir }}
+      run: terraform import aws_cognito_user_pool.main ${{ env.COGNITO_POOL_ID }}
+
     - name: Terraform Plan
       id: plan
       working-directory: ${{ inputs.terraform-dir }}
       shell: bash
       run: |
         terraform plan -out=tfplan \
-          # -var="create_cognito=${{ env.create_cognito }}" \
           -var="cognito_name=${{ inputs.cognito-name }}" \
-          -var="cognito_user_pool=${{ inputs.cognito-user-pool }}"
-
-    - name: Terraform Apply with Retry
-      id: apply
-      continue-on-error: true
-      working-directory: ${{ inputs.terraform-dir }}
-      shell: bash
-      run: |
-        for attempt in {1..5}; do
-          if terraform apply -auto-approve tfplan; then
-            echo "apply_success=true" >> $GITHUB_ENV
-            break
-          else
-            sleep 120
-            if [ $attempt -eq 5 ]; then
-              echo "apply_success=false" >> $GITHUB_ENV
-              exit 1
-            fi
-          fi
-        done
+          -var="cognito_user_pool=${{ inputs.cognito-user-pool }}" \
+          -var="cognito_user_pool_id=${{ env.COGNITO_POOL_ID }}"
 
     - name: Terraform Destroy on Failure
       if: env.apply_success == 'false'
