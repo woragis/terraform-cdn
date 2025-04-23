@@ -2,10 +2,8 @@ provider "aws" {
   region = local.aws_region
 }
 
-# Create Cognito User Pool only if the flag is true
-resource "aws_cognito_user_pool" "this" {
-  count = local.create_cognito ? 1 : 0
-
+# Create the user pool
+resource "aws_cognito_user_pool" "main" {
   name = local.user_pool_name
 
   username_attributes = ["email"] # ✅ Login with email only
@@ -42,11 +40,10 @@ resource "aws_cognito_user_pool" "this" {
   }
 }
 
-resource "aws_cognito_user_pool_client" "this" {
-  count = local.create_cognito ? 1 : 0
-
-  name         = "my-user-pool-client"
-  user_pool_id = aws_cognito_user_pool.this[0].id
+# Create the Cognito User Pool Client
+resource "aws_cognito_user_pool_client" "main" {
+  name         = local.user_pool_name
+  user_pool_id = aws_cognito_user_pool.main.id
 
   access_token_validity  = local.token_validity_minutes
   id_token_validity      = local.token_validity_minutes
@@ -67,14 +64,4 @@ resource "aws_cognito_user_pool_client" "this" {
     "ALLOW_USER_SRP_AUTH",
     "ALLOW_ADMIN_USER_PASSWORD_AUTH"
   ]
-}
-
-output "user_pool_id" {
-  value = aws_cognito_user_pool.this[0].id
-  description = "The Cognito User Pool ID."
-}
-
-output "client_id" {
-  value = aws_cognito_user_pool_client.this[0].id
-  description = "The Cognito User Pool Client ID."
 }
