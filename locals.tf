@@ -1,7 +1,6 @@
 locals {
   aws_region            = var.aws_region
-  create_cognito        = true
-  user_pool_name        = "my-user-pool"
+  user_pool_name        = var.user_pool_name
   user_pool_email_schema = {
     name     = "email"
     required = true

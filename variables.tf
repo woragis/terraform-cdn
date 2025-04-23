@@ -4,12 +4,6 @@ variable "aws_region" {
   default     = "us-east-1"
 }
 
-variable "create_cognito" {
-  description = "A boolean flag to control if Cognito resources should be created."
-  type        = bool
-  default     = true
-}
-
 variable "user_pool_name" {
   description = "The name of the Cognito User Pool."
   type        = string
